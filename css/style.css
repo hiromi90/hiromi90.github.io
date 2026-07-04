@@ -28,7 +28,7 @@
 /* === Reset === */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-body { font-family: var(--font); font-size: 16px; line-height: 1.7; color: var(--text); background: #fff; -webkit-font-smoothing: antialiased; }
+body { font-family: var(--font); font-size: 16px; line-height: 1.7; color: var(--text); background: var(--primary); -webkit-font-smoothing: antialiased; overflow-x: clip; }
 img { max-width: 100%; height: auto; display: block; }
 a { color: inherit; text-decoration: none; }
 ul, ol { list-style: none; }
@@ -36,7 +36,7 @@ button { font-family: var(--font); cursor: pointer; }
 
 /* === Layout === */
 .container { max-width: var(--container); margin: 0 auto; padding: 0 24px; }
-.section { padding: 72px 0; }
+.section { padding: 72px 0; background: #fff; }
 .section--light { background: var(--bg-light); }
 
 /* === Header === */
@@ -47,7 +47,7 @@ button { font-family: var(--font); cursor: pointer; }
 }
 .header-inner {
   display: flex; align-items: center; justify-content: space-between;
-  height: 100%; max-width: var(--container); margin: 0 auto; padding: 0 24px;
+  height: 100%; max-width: var(--container); margin: 0 auto; padding: 0 10px;
 }
 /* .site-logo {
   display: flex; align-items: center; gap: 10px;
@@ -62,8 +62,6 @@ button { font-family: var(--font); cursor: pointer; }
   font-size: 13px;
   line-height: 1.35;
   flex-shrink: 0;
-
-  transition: transform 0.1s linear;
 }
 .site-logo img { height: 44px; width: auto; }
 .logo-text { letter-spacing: 0.02em; }
@@ -349,9 +347,9 @@ button { font-family: var(--font); cursor: pointer; }
 .member-comment { font-size: 13px; color: var(--text); border-top: 1px solid var(--border); padding-top: 12px; line-height: 1.6; font-style: italic; }
 
 /* === Records — Parent Banners === */
-.records-hero { background: linear-gradient(135deg, #3B1A7A 0%, var(--primary) 100%); color: #fff; padding: 72px 24px; text-align: center; }
-.records-hero-title { font-size: clamp(52px, 12vw, 88px); font-weight: 700; letter-spacing: 0.1em; line-height: 1; }
-.records-hero-sub { font-size: 16px; color: rgba(255,255,255,0.7); margin-top: 10px; letter-spacing: 0.12em; }
+.records-hero { background: var(--primary); color: #fff; padding: 52px 24px 44px; text-align: center; position: relative; overflow: hidden; }
+.records-hero-title { font-size: clamp(26px, 5vw, 42px); font-weight: 700; letter-spacing: 0.1em; }
+.records-hero-sub { font-size: 15px; color: rgba(255,255,255,0.72); margin-top: 10px; letter-spacing: 0.12em; }
 .rec-banners { display: flex; flex-direction: column; gap: 18px; max-width: 760px; margin: 48px auto 0; }
 .rec-banner {
   display: flex; align-items: center; justify-content: space-between;
@@ -361,7 +359,7 @@ button { font-family: var(--font); cursor: pointer; }
 }
 .rec-banner:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
 .rec-banner--purple { background: var(--primary); color: #fff; }
-.rec-banner--gold { background: var(--accent); color: var(--text); }
+.rec-banner--gold { background: var(--primary); color: #fff; }
 .rec-banner-icon { font-size: 26px; }
 .rec-banner-arrow { font-size: 22px; opacity: 0.7; }
 
@@ -397,9 +395,9 @@ button { font-family: var(--font); cursor: pointer; }
 .comp-meta { font-size: 13px; color: var(--sub); margin-top: 3px; }
 
 /* === History Page === */
-.history-hero { padding: 72px 24px; text-align: center; background: linear-gradient(135deg, #1A0844, #3B1A7A); }
-.history-hero-title { font-size: clamp(36px, 8vw, 64px); font-weight: 700; color: var(--accent); letter-spacing: 0.1em; }
-.history-hero-sub { font-size: 14px; color: rgba(255,255,255,0.55); margin-top: 10px; letter-spacing: 0.1em; }
+.history-hero { padding: 72px 24px; text-align: center; background: #231342; }
+.history-hero-title { font-size: clamp(36px, 8vw, 42px); font-weight: 700; color: #ffa200; letter-spacing: 0.1em; }
+.history-hero-sub { font-size: 15px; color: rgba(255,255,255,0.55); margin-top: 10px; letter-spacing: 0.1em; }
 .ekiden-card { border: 2px solid var(--accent); border-radius: 14px; overflow: hidden; margin-bottom: 28px; box-shadow: var(--shadow); }
 .ekiden-head { background: var(--accent); color: var(--text); padding: 14px 24px; font-size: 16px; font-weight: 700; }
 .ekiden-body { padding: 24px; background: #fff; }
@@ -578,49 +576,19 @@ button { font-family: var(--font); cursor: pointer; }
 }
 
 /* ============================================================
-   ヘッダー スクロール透明化エフェクト
+   ヘッダー（スクロール時の挙動）
+   ------------------------------------------------------------
+   スクロールしてもヘッダーは常に紫の帯・同じ高さ・白文字のまま
+   上部に固定する。ページ最上部から少し動いたときだけ影をわずかに
+   濃くして「浮いている」感じを出す。透明化・文字色の変化・ロゴの
+   移動・高さの変化といった大きな動きはさせず、落ち着いた動作にする。
    ============================================================ */
 .site-header {
-  /* transition を追加（既存の background・box-shadow に適用） */
-  transition: background 0.45s ease, box-shadow 0.45s ease, height 0.45s ease;
+  transition: box-shadow 0.25s ease;
 }
-/* ページ最上部以外にいるとき JS が .is-transparent クラスを付与 */
-.site-header.is-transparent {
-  background: rgba(109, 40, 217, 0) !important;
-  box-shadow: none !important;
-  height: 40px;
-}
-.site-header.is-transparent .header-inner {
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  padding-left: 12px;
-  padding-right: 12px;
-}
-/* 透明時のテキスト可読性を確保（影で背景を問わず読める） */
-.site-header.is-transparent .logo-text,
-.site-header.is-transparent .global-nav a {
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
-}
-.site-header.is-transparent .hamburger span {
-  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.6));
-}
-/* 透明時のテキストを黒色に変更*/
-.global-nav a {
-  color: #fff;
-  transition: color 0.1s linear;
-}
-
-/* --- スクロール（ヘッダー透明）時：選択範囲を最小化 ---
-   通常時は塗りつぶしの枠、スクロール時は「文字の幅ぴったりの細い下線」だけにして
-   青い選択範囲をできるだけ小さくする（現在ページ・ホバーの両方に適用）。 */
-.site-header.is-transparent .global-nav li.current > a,
-.site-header.is-transparent .global-nav a:hover {
-  background: transparent !important;
-  border-radius: 0;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 5px;
+/* ページ最上部から少しでもスクロールしたとき JS が .is-scrolled を付与 */
+.site-header.is-scrolled {
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
 }
 
 
@@ -840,10 +808,29 @@ button { font-family: var(--font); cursor: pointer; }
    ニュースページ レスポンシブ
    ============================================================ */
 @media (max-width: 767px) {
+  /* ニュース一覧ページ：日付＋カテゴリを1行目、タイトルを2行目に */
   .news-page-item {
-    grid-template-columns: 1fr;
-    gap: 6px;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "date cat"
+      "title title";
+    align-items: center;
+    justify-content: start;
+    gap: 6px 10px;
+    padding: 16px 12px;
   }
+  .news-page-date { grid-area: date; }
+  .news-page-item > .cat-tag { grid-area: cat; justify-self: start; }
+  .news-page-title { grid-area: title; }
+
+  /* トップページの最新情報：日付＋カテゴリを1行目、タイトルを2行目に */
+  .news-list .news-item {
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    align-items: center;
+  }
+  .news-list .news-item .news-title { flex-basis: 100%; }
+
   .article-img-grid { grid-template-columns: 1fr; }
   .article-img-grid.cols-3 { grid-template-columns: repeat(2, 1fr); }
   .article-footer { flex-direction: column; }
@@ -1001,4 +988,126 @@ button { font-family: var(--font); cursor: pointer; }
 .maint-folder code {
   background: #FEF3C7; border: 1px solid #F59E0B;
   border-radius: 4px; padding: 1px 6px; font-size: 12px;
+}
+
+/* ============================================================
+   2026 改修 追加スタイル
+   （#8 監督ラベル / #4 自己ベスト表 / #3 NEWバッジ /
+    #1 ページ送り / #6 見出しアニメーション）
+   ============================================================ */
+
+/* --- #8 監督名の「監督」ラベル：サブ色・小さめ --- */
+.coach-name-sub {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sub);
+  margin-left: 8px;
+}
+
+/* --- #4 自己ベスト表：氏名（学年）と「非表示」ボタンをきれいに整列 --- */
+.records-table td.player-cell { white-space: nowrap; }
+.player-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.player-cell > span { font-weight: 700; }
+.hide-player-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--sub);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  padding: 4px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: background var(--t), color var(--t), border-color var(--t);
+}
+.hide-player-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* --- #3 NEW バッジ（表示から1週間以内のニュース） --- */
+.news-new-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 999px;
+  letter-spacing: 0.06em;
+  vertical-align: middle;
+  animation: newPulse 1.6s ease-in-out infinite;
+}
+@keyframes newPulse {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+  50%      { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+}
+
+/* --- #1 ニュース一覧ページのページ送り --- */
+.news-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+}
+.news-pager button {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background var(--t), color var(--t), border-color var(--t);
+}
+.news-pager button:hover:not(:disabled):not(.active) {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.news-pager button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  cursor: default;
+}
+.news-pager button:disabled { opacity: 0.4; cursor: default; }
+.news-pager .news-pager-ellipsis { color: var(--sub); padding: 0 2px; }
+
+/* --- #6 見出しの読み込み時アニメーション（位置・レイアウトは変えない） --- */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero-title         { animation: riseIn 0.8s ease both; }
+.hero-sub           { animation: riseIn 0.8s ease 0.15s both; }
+.page-hero-en       { animation: riseIn 0.7s ease both; }
+.page-hero-ja       { animation: riseIn 0.7s ease 0.12s both; }
+.records-hero-title { animation: riseIn 0.8s ease both; }
+.records-hero-sub   { animation: riseIn 0.8s ease 0.16s both; }
+.history-hero-title { animation: riseIn 0.8s ease both; }
+.history-hero-sub   { animation: riseIn 0.8s ease 0.16s both; }
+
+/* 「視差効果を減らす」設定の端末では追加アニメーションを止める */
+@media (prefers-reduced-motion: reduce) {
+  .news-new-badge,
+  .hero-title, .hero-sub,
+  .page-hero-en, .page-hero-ja,
+  .records-hero-title, .records-hero-sub,
+  .history-hero-title, .history-hero-sub {
+    animation: none;
+  }
 }

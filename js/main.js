@@ -130,52 +130,28 @@ document.querySelectorAll('[data-scroll-to]').forEach(btn => {
    ---------------------------------------------------------- */
 
 /* ----------------------------------------------------------
-   9. Header scroll transparency effect（全ページ共通）
+   9. Header scroll effect（全ページ共通）
+   ------------------------------------------------------------
+   ヘッダーは常に紫の帯・同じ高さ・白文字のまま上部に固定する。
+   スクロールしたときだけ .is-scrolled を付けて影をわずかに濃く
+   するだけの、落ち着いた動作にする（透明化・色変化・ロゴ移動なし）。
    ---------------------------------------------------------- */
 (function () {
   const header = document.querySelector('.site-header');
   if (!header) return;
 
-  const navLinks = document.querySelectorAll('.global-nav a');
-  const hamburger = document.querySelectorAll('.hamburger span');
-  const logo = document.querySelector('.site-logo');
-
+  let ticking = false;
   function updateHeader() {
-    // ヘッダーの透明化
-    if (window.scrollY >= 8) {
-      header.classList.add('is-transparent');
-    } else {
-      header.classList.remove('is-transparent');
-    }
-
-    // 0～600pxの間で白→黒に変化
-    const progress = Math.min(window.scrollY / 600, 1);
-    if (logo) {
-      const maxMove = window.innerWidth > 1200 ? 8 : 8;
-      const move = progress * maxMove;
-      logo.style.transform = `translateX(-${move}px)`;
-    }
-
-    const value = Math.round(255 * (1 - progress));
-    const color = `rgb(${value}, ${value}, ${value})`;
-
-    // ナビゲーション
-    navLinks.forEach(link => {
-      if (link.closest('.dropdown')) {
-        link.style.color = '#000';
-      } 
-      else {
-        link.style.color = color;
-      }
-    });
-
-    hamburger.forEach(span => {
-      span.style.backgroundColor = color;
-    });
-
+    header.classList.toggle('is-scrolled', window.scrollY > 4);
+    ticking = false;
   }
-
-  window.addEventListener('scroll', updateHeader, { passive: true });
+  window.addEventListener('scroll', () => {
+    // requestAnimationFrame でまとめて処理し、スクロールを滑らかに
+    if (!ticking) {
+      ticking = true;
+      window.requestAnimationFrame(updateHeader);
+    }
+  }, { passive: true });
   updateHeader();
 })();
 
@@ -444,7 +420,7 @@ if (hiddenSet.has(player)) {
         const player = row[header] ?? "";
 
         html += `
-          <td>
+          <td class="player-cell">
             <span>${player}</span>
 
             <button

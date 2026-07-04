@@ -184,6 +184,14 @@ async function applyCoach() {
   const photo = c['写真'] ? `/images/${c['写真']}` : '';
   const career = Array.isArray(c['経歴']) ? c['経歴'] : (c['経歴'] ? [c['経歴']] : []);
 
+  /* 氏名の末尾に「監督」がある場合、その部分だけ小さめ・サブ色で表示する。
+     例：「奥野佳宏 監督」→ 奥野佳宏＋<span class="coach-name-sub">監督</span> */
+  const nameRaw = (c['氏名'] || '').trim();
+  const mName = nameRaw.match(/^(.*?)[\s　]*(監督)$/);
+  const nameHtml = mName
+    ? `${escapeHtml(mName[1].trim())}<span class="coach-name-sub">${escapeHtml(mName[2])}</span>`
+    : escapeHtml(nameRaw);
+
   wrap.innerHTML = `
     <div>
       ${photo
@@ -191,7 +199,7 @@ async function applyCoach() {
         : `<div class="coach-photo-placeholder"><span>監督写真</span></div>`}
     </div>
     <div>
-      <p class="coach-name">${escapeHtml(c['氏名'] || '')}</p>
+      <p class="coach-name">${nameHtml}</p>
       <p class="coach-role">${escapeHtml(c['役職'] || '')}</p>
       ${career.length ? `<ul class="coach-career">${career.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>` : ''}
       ${c['一言'] ? `<blockquote class="coach-quote">「${escapeHtml(c['一言'])}」</blockquote>` : ''}
@@ -436,6 +444,22 @@ function formatNewsDate(d) {
   return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
 }
 
+/* 表示から1週間（7日）以内のニュースか判定する。
+   きょうの日付から7日前以降のものを「NEW」とみなす。 */
+function isRecentNews(date) {
+  if (!date) return false;
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
+  return date >= sevenDaysAgo;
+}
+
+/* NEW バッジのHTML（1週間以内なら付ける） */
+function newsNewBadge(item) {
+  return isRecentNews(item.date)
+    ? '<span class="news-new-badge">NEW</span>'
+    : '';
+}
+
 async function loadNews() {
   const text = await fetchText('/content/news.txt');
   if (!text) return [];
@@ -468,13 +492,13 @@ async function applyNews() {
 
   const items = await loadNews();
 
-  /* --- トップページ：最新5件 --- */
+  /* --- トップページ：最新5件（1週間以内は NEW バッジ） --- */
   if (topList) {
     topList.innerHTML = items.slice(0, 5).map(n => {
       const inner = `
         <time class="news-date">${escapeHtml(n.displayDate)}</time>
         <span class="cat-tag ${newsCatClass(n.category)}">${escapeHtml(n.category)}</span>
-        <span class="news-title">${escapeHtml(n.title)}</span>`;
+        <span class="news-title">${escapeHtml(n.title)}${newsNewBadge(n)}</span>`;
       if (n.link) {
         return `<li class="news-item fade-up"><a href="${escapeHtml(n.link)}" class="news-item-inner" style="display:contents;">${inner}</a></li>`;
       }
@@ -483,27 +507,92 @@ async function applyNews() {
     observeFadeUp(topList);
   }
 
-  /* --- ニュースページ：6ヶ月以内のみ表示（自動非表示） --- */
+  /* --- ニュースページ：6ヶ月以内のみ表示（自動非表示）＋ 1ページ10件のページ送り --- */
   const now  = new Date();
   const half = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
 
   if (pageList) {
     const visible = items.filter(n => n.date && n.date >= half);
-    if (!visible.length) {
-      pageList.innerHTML = '<p class="news-empty">現在、直近6ヶ月以内のニュースはありません。</p>';
-    } else {
-      pageList.innerHTML = visible.map(n => {
-        const inner = `
-          <time class="news-page-date">${escapeHtml(n.displayDate)}</time>
-          <span class="cat-tag ${newsCatClass(n.category)}">${escapeHtml(n.category)}</span>
-          <span class="news-page-title">${escapeHtml(n.title)}</span>`;
-        if (n.link) {
-          return `<a href="${escapeHtml(n.link)}" class="news-page-item fade-up">${inner}</a>`;
-        }
-        return `<div class="news-page-item news-page-item--plain fade-up">${inner}</div>`;
-      }).join('');
-      observeFadeUp(pageList);
+    const PER_PAGE = 10;
+    const pageCount = Math.max(1, Math.ceil(visible.length / PER_PAGE));
+
+    /* 一覧の直後にページ送り用のコンテナを用意（無ければ作る） */
+    let pager = document.getElementById('news-pager');
+    if (!pager) {
+      pager = document.createElement('div');
+      pager.id = 'news-pager';
+      pager.className = 'news-pager';
+      pageList.after(pager);
     }
+
+    /* 1記事分のHTML（1週間以内は NEW バッジ） */
+    function newsPageItemHtml(n) {
+      const inner = `
+        <time class="news-page-date">${escapeHtml(n.displayDate)}</time>
+        <span class="cat-tag ${newsCatClass(n.category)}">${escapeHtml(n.category)}</span>
+        <span class="news-page-title">${escapeHtml(n.title)}${newsNewBadge(n)}</span>`;
+      if (n.link) {
+        return `<a href="${escapeHtml(n.link)}" class="news-page-item fade-up">${inner}</a>`;
+      }
+      return `<div class="news-page-item news-page-item--plain fade-up">${inner}</div>`;
+    }
+
+    /* ページ送りボタンのHTMLを組み立てる（前へ・番号・次へ）。
+       ページ数が多いときは現在ページの周辺と両端だけを出し、
+       間は「…」で省略する。 */
+    function buildPagerHtml(current) {
+      if (pageCount <= 1) return '';
+      const parts = [];
+      parts.push(`<button data-page="${current - 1}" ${current === 1 ? 'disabled' : ''} aria-label="前のページ">‹</button>`);
+
+      const nums = [];
+      for (let p = 1; p <= pageCount; p++) {
+        if (p === 1 || p === pageCount || (p >= current - 1 && p <= current + 1)) {
+          nums.push(p);
+        } else if (nums[nums.length - 1] !== '…') {
+          nums.push('…');
+        }
+      }
+      nums.forEach(p => {
+        if (p === '…') {
+          parts.push('<span class="news-pager-ellipsis">…</span>');
+        } else {
+          parts.push(`<button data-page="${p}" class="${p === current ? 'active' : ''}" aria-label="${p}ページ目"${p === current ? ' aria-current="page"' : ''}>${p}</button>`);
+        }
+      });
+
+      parts.push(`<button data-page="${current + 1}" ${current === pageCount ? 'disabled' : ''} aria-label="次のページ">›</button>`);
+      return parts.join('');
+    }
+
+    function renderNewsPage(page) {
+      if (!visible.length) {
+        pageList.innerHTML = '<p class="news-empty">現在、直近6ヶ月以内のニュースはありません。</p>';
+        pager.innerHTML = '';
+        return;
+      }
+      const p = Math.min(Math.max(1, page), pageCount);
+      const start = (p - 1) * PER_PAGE;
+      const slice = visible.slice(start, start + PER_PAGE);
+      pageList.innerHTML = slice.map(newsPageItemHtml).join('');
+      observeFadeUp(pageList);
+      pager.innerHTML = buildPagerHtml(p);
+      pager.dataset.current = String(p);
+    }
+
+    /* ページ番号クリックで切り替え＋一覧の先頭へスクロール */
+    pager.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-page]');
+      if (!btn || btn.disabled) return;
+      const page = Number(btn.dataset.page);
+      if (!page) return;
+      renderNewsPage(page);
+      const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 68;
+      const top = pageList.getBoundingClientRect().top + window.scrollY - headerH - 24;
+      window.scrollTo({ top, behavior: 'smooth' });
+    });
+
+    renderNewsPage(1);
   }
 
   /* --- 整理用ページ（/news/maintenance/）：期限切れの削除リスト --- */
