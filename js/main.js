@@ -14,19 +14,23 @@ let hiddenLongPlayers = new Set();
   const nav = document.getElementById('mobile-nav');
   if (!btn || !nav) return;
 
+  // メニューを開く／閉じる
   btn.addEventListener('click', () => {
     const open = nav.classList.toggle('is-open');
     btn.classList.toggle('is-active', open);
     btn.setAttribute('aria-expanded', String(open));
-    document.body.style.overflow = open ? 'hidden' : '';
+    document.body.style.overflow = open ? 'hidden' : '';   // 背景のスクロールを止める
+    document.body.classList.toggle('nav-open', open);       // 開いている間はロゴを隠す（css 側で制御）
   });
 
+  // メニュー内のリンクを押したら閉じる
   nav.querySelectorAll('a').forEach(a => {
     a.addEventListener('click', () => {
       nav.classList.remove('is-open');
       btn.classList.remove('is-active');
       btn.setAttribute('aria-expanded', 'false');
       document.body.style.overflow = '';
+      document.body.classList.remove('nav-open');
     });
   });
 })();
@@ -128,32 +132,6 @@ document.querySelectorAll('[data-scroll-to]').forEach(btn => {
    ※ 部員カードの生成・クリックモーダルは content-loader.js が
      content/members.txt を読み込んで担当します（ここでは何もしません）。
    ---------------------------------------------------------- */
-
-/* ----------------------------------------------------------
-   9. Header scroll effect（全ページ共通）
-   ------------------------------------------------------------
-   ヘッダーは常に紫の帯・同じ高さ・白文字のまま上部に固定する。
-   スクロールしたときだけ .is-scrolled を付けて影をわずかに濃く
-   するだけの、落ち着いた動作にする（透明化・色変化・ロゴ移動なし）。
-   ---------------------------------------------------------- */
-(function () {
-  const header = document.querySelector('.site-header');
-  if (!header) return;
-
-  let ticking = false;
-  function updateHeader() {
-    header.classList.toggle('is-scrolled', window.scrollY > 4);
-    ticking = false;
-  }
-  window.addEventListener('scroll', () => {
-    // requestAnimationFrame でまとめて処理し、スクロールを滑らかに
-    if (!ticking) {
-      ticking = true;
-      window.requestAnimationFrame(updateHeader);
-    }
-  }, { passive: true });
-  updateHeader();
-})();
 
 /* ----------------------------------------------------------
    10.-11. ニュース表示（トップページ・ニュースページ）

@@ -20,8 +20,10 @@
 var SITE_HEADER_HTML = `
 <header class="site-header">
   <div class="header-inner">
-    <a href="/" class="site-logo">
-      <img src="/images/logo.png" alt="愛知工業大学 陸上競技部" height="44">
+    <!-- ロゴ（左端）。白い角丸枠は css の「.site-logo」で付けています。
+         大きさを変えたいときは css の「.site-logo img { height: … }」を調整。 -->
+    <a href="/" class="site-logo" aria-label="愛知工業大学 陸上競技部 トップへ">
+      <img src="/images/logo.png" alt="愛知工業大学 陸上競技部">
     </a>
     <button class="hamburger" id="hamburger" aria-label="メニューを開く" aria-expanded="false">
       <span></span><span></span><span></span>

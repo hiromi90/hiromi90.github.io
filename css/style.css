@@ -39,43 +39,88 @@ button { font-family: var(--font); cursor: pointer; }
 .section { padding: 72px 0; background: #fff; }
 .section--light { background: var(--bg-light); }
 
-/* === Header === */
+/* ============================================================
+   ヘッダー
+   ------------------------------------------------------------
+   ・帯（背景）は透明。トップページは写真の上、その他のページは
+     紫の背景の上に「浮いて」見えます。
+   ・左端＝ロゴ（白い角丸枠つき） / 右端＝グローバルナビ（紫ピル）。
+   ・文字はすべて白。カーソルを合わせると少し薄くなります。
+   ★ 色や配置を後から変えるときは、下の「調整用の値」と
+     各行の【調整】コメントを見てください。
+   ============================================================ */
+
+/* --- ヘッダーで使う調整用の値（ここを変えると一括で反映されます）--- */
+:root {
+  /* グローバルナビ（ピル）の背景。濃いめ・半透明のパープル。
+     単色にしたいときは、下の2つを 例）#5B21B6 のような色コードに変えるだけ。*/
+  --nav-pill-bg:       rgba(75, 20, 145, 0.55);   /* 通常時のピルの色 */
+  --nav-pill-bg-hover: rgba(75, 20, 145, 0.78);   /* 現在ページ／強調したいとき */
+
+  /* ロゴの白い角丸枠 */
+  --logo-frame-radius: 14px;   /* 【調整】大きくすると枠の角がより丸くなる */
+  --logo-frame-pad:    6px;    /* 【調整】ロゴと白枠のすき間（大きいほど余白が増える）*/
+}
+
 .site-header {
-  position: sticky; top: 0; z-index: 1000;
-  background: rgba(109, 40, 217, 0.0); height: var(--header-h);
-  /* box-shadow: 0 2px 12px rgba(0,0,0,0.25); */
+  position: sticky;          /* スクロールしても上部に固定 */
+  top: 0;
+  z-index: 1000;
+  height: var(--header-h);
+  background: transparent;   /* 帯は透明にして写真・紫の上に浮かせる */
 }
+
+/* ロゴとナビを「両端」に振り分ける土台（#3）。
+   【調整】端からの余白 → padding の左右（0 18px の 18px）を変更
+   【調整】中央寄せにしたいとき → justify-content を center に変更 */
 .header-inner {
-  display: flex; align-items: center; justify-content: space-between;
-  height: 100%; max-width: var(--container); margin: 0 auto; padding: 0 10px;
-}
-/* .site-logo {
-  display: flex; align-items: center; gap: 10px;
-  color: #fff; font-weight: 700; font-size: 13px; line-height: 1.35; flex-shrink: 0;
-} */
-.site-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #fff;
-  font-weight: 700;
-  font-size: 13px;
-  line-height: 1.35;
-  flex-shrink: 0;
+  justify-content: space-between;   /* ← ロゴ=左端 / ナビ=右端 */
+  height: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 18px;
 }
-.site-logo img { height: 44px; width: auto; }
-.logo-text { letter-spacing: 0.02em; }
 
-/* Desktop Nav */
+/* --- ロゴ（左端・白い角丸枠つき）(#4) --- */
+.site-logo {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: var(--logo-frame-pad);
+  background: #ffffff;                        /* 白い塗り背景 */
+  border-radius: var(--logo-frame-radius);    /* 角丸の四角枠 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);  /* 【調整】影を消すなら、この行を削除 */
+  transition: transform var(--t);
+}
+.site-logo:hover { transform: translateY(-1px); }
+.site-logo img { height: 40px; width: auto; }   /* 【調整】ロゴの大きさは height */
+
+/* --- グローバルナビ（右端・紫ピル）(#4) --- */
+.global-nav {
+  background: var(--nav-pill-bg);
+  border-radius: 999px;                  /* 端を丸めてピル型に */
+  padding: 5px 8px;
+  -webkit-backdrop-filter: blur(6px);    /* すりガラス風（対応ブラウザのみ）*/
+  backdrop-filter: blur(6px);
+}
 .global-nav ul { display: flex; align-items: center; gap: 2px; }
 .global-nav li { position: relative; }
 .global-nav a {
-  display: block; padding: 8px 13px;
-  color: rgb(255, 255, 0); font-size: 14px; font-weight: 700;
-  border-radius: 6px; transition: background var(--t), color var(--t); white-space: nowrap;
+  display: block;
+  padding: 8px 14px;
+  color: #ffffff;         /* 文字は白（#6）*/
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: color var(--t), background var(--t);
 }
-.global-nav a:hover,
-.global-nav li.current > a { background: var(--primary-light); color: rgb(255, 255, 0); }
+/* カーソルを合わせると文字がふっと薄くなる（#5）*/
+.global-nav a:hover { color: rgba(255, 255, 255, 0.6); }
+/* いま見ているページの項目は、背景をうっすら付けて示す */
+.global-nav li.current > a { background: var(--nav-pill-bg-hover); }
 
 /* Dropdown */
 .has-dropdown > a::after { content: ' ▾'; font-size: 11px; }
@@ -137,26 +182,53 @@ button { font-family: var(--font); cursor: pointer; }
 }
 .mobile-sub a:hover { background: rgba(255,255,255,0.12); color: #fff; }
 
-/* === Hero (Top Page) === */
+/* モバイルメニューを開いている間だけロゴを隠す（#1）。
+   main.js が開閉時に <body> へ .nav-open を付け外しします。
+   閉じるための×ボタン（ハンバーガー）はそのまま残ります。 */
+body.nav-open .site-logo {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* === ヒーロー（トップページ最上部）===
+   ------------------------------------------------------------
+   写真の上にチーム名を重ねる部分。
+   テキストは「下寄せ」にして、上側に部員の顔が見えるようにしています（#2）。
+   ★ 顔の見え方を調整するポイント：
+     ・写真のどの高さを見せるか → .hero-bg の object-position
+     ・テキストをどれだけ上げるか → .hero-content の下側 padding
+   ------------------------------------------------------------ */
 .hero {
-  position: relative; height: 520px;
-  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  position: relative;
+  height: 520px;              /* 【調整】PCでのヒーローの高さ */
+  display: flex;
+  align-items: flex-end;      /* テキストを下寄せに（上側に顔を見せる）*/
+  justify-content: center;
+  overflow: hidden;
   background: linear-gradient(135deg, #3B1A7A 0%, #5B21B6 40%, #6D28D9 70%, #7C3AED 100%);
 }
-.hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.hero-bg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 22%;   /* 【調整】顔の位置合わせ（PC）。
+                                    数字を小さくすると写真が下へ→顔が上に、
+                                    大きくすると写真が上へ→顔が下に来る */
+  z-index: 0;
+}
 .hero-overlay { position: absolute; inset: 0; background: rgba(109,40,217,0.25); z-index: 1; }
 .hero-bar { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: var(--accent); z-index: 2; }
-.hero-content { position: relative; z-index: 3; text-align: center; color: #fff; padding: 0 20px; }
+.hero-content {
+  position: relative; z-index: 3;
+  text-align: center; color: #fff;
+  padding: 0 20px 64px;   /* 【調整】右下の 64px を大きくするほどテキストが上がる（下から離れる）*/
+}
 .hero-title {
   font-size: clamp(26px, 5.5vw, 48px); font-weight: 700; line-height: 1.25;
   letter-spacing: 0.05em; text-shadow: 0 2px 16px rgba(0,0,0,0.3);
 }
 .hero-sub { font-size: clamp(11px, 1.8vw, 15px); color: rgba(255,255,255,0.8); margin-top: 14px; letter-spacing: 0.14em; }
-.hero-note {
-  margin-top: 36px; font-size: 12px; color: rgba(255,255,255,0.55);
-  border: 1px dashed rgba(255,255,255,0.35); display: inline-block;
-  padding: 7px 18px; border-radius: 20px;
-}
 
 /* === Page Hero (inner pages) === */
 .page-hero { background: var(--primary); color: #fff; padding: 52px 24px 44px; text-align: center; position: relative; overflow: hidden; }
@@ -551,7 +623,10 @@ button { font-family: var(--font); cursor: pointer; }
 
 @media (max-width: 767px) {
   :root { --header-h: 60px; }
+  /* スマホのヒーロー：高さを縮め、顔が残る位置に写真を合わせる（#2）*/
   .hero { height: 340px; }
+  .hero-bg { object-position: center 28%; }   /* 【調整】スマホでの顔の位置合わせ */
+  .hero-content { padding-bottom: 40px; }     /* 【調整】スマホでのテキストの高さ */
   .global-nav { display: none; }
   .hamburger { display: flex; }
   .members-grid { grid-template-columns: 1fr; }
@@ -574,23 +649,6 @@ button { font-family: var(--font); cursor: pointer; }
   .ekiden-time { font-size: 32px; }
   .qr-row { gap: 70px; }
 }
-
-/* ============================================================
-   ヘッダー（スクロール時の挙動）
-   ------------------------------------------------------------
-   スクロールしてもヘッダーは常に紫の帯・同じ高さ・白文字のまま
-   上部に固定する。ページ最上部から少し動いたときだけ影をわずかに
-   濃くして「浮いている」感じを出す。透明化・文字色の変化・ロゴの
-   移動・高さの変化といった大きな動きはさせず、落ち着いた動作にする。
-   ============================================================ */
-/* .site-header {
-  transition: box-shadow 0.25s ease;
-}
-/* ページ最上部から少しでもスクロールしたとき JS が .is-scrolled を付与 */
-/* .site-header.is-scrolled {
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
-} */
-
 
 /* ============================================================
    カテゴリタグ（ニュース）
