@@ -40,6 +40,7 @@ let hiddenLongPlayers = new Set();
    ---------------------------------------------------------- */
 (function () {
   const path = window.location.pathname.replace(/\/$/, '') || '/';
+  // 親ナビ：一致するページの <li> に .current（「記録」は子ページ閲覧中も付く）
   document.querySelectorAll('.global-nav > ul > li').forEach(li => {
     const a = li.querySelector('a');
     if (!a) return;
@@ -47,6 +48,11 @@ let hiddenLongPlayers = new Set();
     if (href === path || (href !== '/' && path.startsWith(href))) {
       li.classList.add('current');
     }
+  });
+  // ドロップダウン内：いま見ている子ページ（大会結果など）のリンクにも .current
+  document.querySelectorAll('.global-nav .dropdown a').forEach(a => {
+    const href = a.getAttribute('href').replace(/\/$/, '') || '/';
+    if (href !== '/' && path.startsWith(href)) a.classList.add('current');
   });
 })();
 

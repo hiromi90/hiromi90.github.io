@@ -60,34 +60,42 @@ button { font-family: var(--font); cursor: pointer; }
   /* ロゴの白い角丸枠 */
   --logo-frame-radius: 14px;   /* 【調整】大きくすると枠の角がより丸くなる */
   --logo-frame-pad:    6px;    /* 【調整】ロゴと白枠のすき間（大きいほど余白が増える）*/
+
+  /* 画面の端からロゴ・ナビまでの余白（#6）。15〜20px の範囲で好みに調整 */
+  --header-edge-gap: 18px;
 }
 
+/* ヘッダーは「ロゴ」と「ナビ」だけの独立した部品の集まり（#5）。
+   帯そのものは pointer-events: none でクリックを受け取らないため、
+   ロゴ〜ナビ間の空白部分をクリックすると、下にあるページ内容
+   （スクロールで下に入ってきたニュースのリンクなど）がそのまま押せる。 */
 .site-header {
   position: sticky;          /* スクロールしても上部に固定 */
   top: 0;
   z-index: 1000;
   height: var(--header-h);
   background: transparent;   /* 帯は透明にして写真・紫の上に浮かせる */
+  pointer-events: none;      /* 空白部分はクリックを下へ通す（#5） */
 }
 
-/* ロゴとナビを「両端」に振り分ける土台（#3）。
-   【調整】端からの余白 → padding の左右（0 18px の 18px）を変更
+/* ロゴとナビを「両端」に振り分ける土台（#3・#6）。
+   【調整】端からの余白 → :root の --header-edge-gap を変更
+   【調整】以前のように中央側へ寄せたいとき → max-width: var(--container); margin: 0 auto; を追加
    【調整】中央寄せにしたいとき → justify-content を center に変更 */
 .header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;   /* ← ロゴ=左端 / ナビ=右端 */
   height: 100%;
-  max-width: var(--container);
-  margin: 0 auto;
-  padding: 0 18px;
+  padding: 0 var(--header-edge-gap);
 }
 
-/* --- ロゴ（左端・白い角丸枠つき）(#4) --- */
+/* --- ロゴ（左端・白い角丸枠つき） --- */
 .site-logo {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
+  pointer-events: auto;                       /* ヘッダー帯は透過でも、ロゴ自体は押せる（#5）*/
   padding: var(--logo-frame-pad);
   background: #ffffff;                        /* 白い塗り背景 */
   border-radius: var(--logo-frame-radius);    /* 角丸の四角枠 */
@@ -97,8 +105,9 @@ button { font-family: var(--font); cursor: pointer; }
 .site-logo:hover { transform: translateY(-1px); }
 .site-logo img { height: 40px; width: auto; }   /* 【調整】ロゴの大きさは height */
 
-/* --- グローバルナビ（右端・紫ピル）(#4) --- */
+/* --- グローバルナビ（右端・紫ピル） --- */
 .global-nav {
+  pointer-events: auto;                  /* ヘッダー帯は透過でも、ナビ自体は押せる（#5）*/
   background: var(--nav-pill-bg);
   border-radius: 999px;                  /* 端を丸めてピル型に */
   padding: 5px 8px;
@@ -110,25 +119,33 @@ button { font-family: var(--font); cursor: pointer; }
 .global-nav a {
   display: block;
   padding: 8px 14px;
-  color: #ffffff;         /* 文字は白（#6）*/
+  color: #ffffff;         /* 文字は白 */
   font-size: 14px;
   font-weight: 700;
   border-radius: 999px;
   white-space: nowrap;
   transition: color var(--t), background var(--t);
 }
-/* カーソルを合わせると文字がふっと薄くなる（#5）*/
+/* カーソルを合わせると文字がふっと薄くなる */
 .global-nav a:hover { color: rgba(255, 255, 255, 0.6); }
-/* いま見ているページの項目は、背景をうっすら付けて示す */
+/* いま見ているページの項目は、背景を濃いめに付けて示す。
+   「記録」の子ページ（大会結果・自己ベスト・歴代記録）を見ているときも
+   親の「記録」にこの濃い背景が付く（main.js の current 判定による）。 */
 .global-nav li.current > a { background: var(--nav-pill-bg-hover); }
 
-/* Dropdown */
+/* --- ドロップダウン（「記録」の子メニュー）(#3) ---
+   親ナビと同じ「濃いめ・半透明の紫＋すりガラス風」。文字は白、
+   カーソルを合わせると文字が薄くなる（親ナビと同じ挙動）。
+   【調整】色を変えたいとき → :root の --nav-pill-bg / --nav-pill-bg-hover */
 .has-dropdown > a::after { content: ' ▾'; font-size: 11px; }
 .dropdown {
   display: flex; flex-direction: column;
   position: absolute; top: calc(100% + 3px); left: 0;
-  background: #fff; border-radius: 8px; box-shadow: var(--shadow-lg);
-  min-width: 190px; padding: 6px 0; border: 1px solid var(--border);
+  background: var(--nav-pill-bg);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border-radius: 16px; box-shadow: var(--shadow-lg);
+  min-width: 190px; padding: 8px;
   visibility: hidden; opacity: 0;
   transform: translateY(-8px);
   /* 閉じるときは 0.25s 待ってから消える（カーソルが少し外れても消えない）。
@@ -147,26 +164,42 @@ button { font-family: var(--font); cursor: pointer; }
   visibility: visible; opacity: 1; transform: translateY(0);
   transition-delay: 0s;   /* 開くときは待たずにすぐ表示 */
 }
-.dropdown li a { color: var(--text); padding: 10px 24px; border-radius: 0; font-size: 14px; }
-.dropdown li a:hover { background: var(--primary-light); color: var(--primary); }
+.dropdown li a { color: #ffffff; padding: 10px 18px; border-radius: 10px; font-size: 14px; }
+/* 子メニューもカーソルで文字が薄くなる */
+.dropdown li a:hover { color: rgba(255, 255, 255, 0.6); }
+/* いま見ている子ページの項目は背景を濃いめに */
+.dropdown li a.current { background: var(--nav-pill-bg-hover); }
 
-/* Hamburger */
+/* --- ハンバーガー（スマホ用の開閉ボタン）(#2) ---
+   写真の明るい部分でも見えるよう、ナビと同じ紫ピルを背景に敷く */
 .hamburger {
   display: none; flex-direction: column; gap: 5px;
-  background: none; border: none; padding: 8px; border-radius: 6px;
+  pointer-events: auto;                  /* ヘッダー帯は透過でも、ボタン自体は押せる（#5）*/
+  background: var(--nav-pill-bg);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  border: none; padding: 11px 12px; border-radius: 999px;
+  transition: background var(--t);
 }
-.hamburger:hover { background: rgba(255,255,255,0.15); }
+.hamburger:hover { background: var(--nav-pill-bg-hover); }
 .hamburger span { display: block; width: 24px; height: 2px; background: #ffffff; border-radius: 2px; transition: var(--t); }
 .hamburger.is-active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
 .hamburger.is-active span:nth-child(2) { opacity: 0; }
 .hamburger.is-active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* Mobile Nav */
+/* --- スマホ用メニュー（全画面）(#4) ---
+   画面の上端（top: 0）から下端までを、わずかに透けのある紫
+   rgba(69, 20, 160, 0.97) で覆う。上部から下の写真や本文が
+   見えてしまわないよう、ヘッダーの高さぶんも含めて塗りつぶす。
+   ×ボタン（ハンバーガー）はこの上（z-index: 1000）に重なって残る。
+   【調整】透け具合 → 最後の 0.97 を小さくするほど透ける（1 で完全に不透明） */
 .mobile-nav {
   display: none; position: fixed;
-  top: var(--header-h); left: 0; right: 0; bottom: 0;
-  background: rgba(69,20,160,0.97); z-index: 999;
-  padding: 20px 24px 40px; overflow-y: auto;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(69, 20, 160, 0.97); z-index: 999;
+  /* 上の padding はヘッダー高さ + 12px。×ボタンとメニュー項目が重ならないための余白 */
+  padding: calc(var(--header-h) + 12px) 24px 40px;
+  overflow-y: auto;
 }
 .mobile-nav.is-open { display: block; }
 .mobile-nav > ul { display: flex; flex-direction: column; gap: 3px; }
@@ -229,6 +262,15 @@ body.nav-open .site-logo {
   letter-spacing: 0.05em; text-shadow: 0 2px 16px rgba(0,0,0,0.3);
 }
 .hero-sub { font-size: clamp(11px, 1.8vw, 15px); color: rgba(255,255,255,0.8); margin-top: 14px; letter-spacing: 0.14em; }
+
+/* 大きい画面（1200px以上）では写真の切り取れる範囲が細長くなり、
+   天井側が多く写って前列の顔が下に切れやすい。写真を上へ引き上げて
+   全員の顔が入るようにする（#1）。
+   【調整】% を大きくするほど写真が上がる（＝写真の下側を見せる）。
+   　　　　顔が上に切れるようになったら % を少し小さくする。 */
+@media (min-width: 1200px) {
+  .hero-bg { object-position: center 42%; }
+}
 
 /* === Page Hero (inner pages) === */
 .page-hero { background: var(--primary); color: #fff; padding: 52px 24px 44px; text-align: center; position: relative; overflow: hidden; }
