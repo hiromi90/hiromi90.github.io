@@ -308,6 +308,11 @@ async function applyMembers() {
 }
 
 /* ---- モーダル（クリックで拡大＋追加情報） ---- */
+/* 開いた元のカードを記憶し、閉じるときフォーカスをそこへ返す
+   （フォーカスがモーダル内に残ったまま aria-hidden を付けると
+     支援技術向けの警告が出るため） */
+let MEMBER_MODAL_OPENER = null;
+
 function setupMemberModal() {
   let modal = document.getElementById('member-modal');
   if (!modal) {
@@ -353,10 +358,16 @@ function setupMemberModal() {
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    /* キーボード・スクリーンリーダー利用者のためフォーカスを×ボタンへ */
+    const closeBtn = modal.querySelector('.member-modal-close');
+    if (closeBtn) closeBtn.focus();
   }
 
   document.querySelectorAll('.member-card[data-member]').forEach(cardEl => {
-    const open = () => openFor(parseInt(cardEl.dataset.member, 10));
+    const open = () => {
+      MEMBER_MODAL_OPENER = cardEl;   /* 閉じたときフォーカスを返す先 */
+      openFor(parseInt(cardEl.dataset.member, 10));
+    };
     cardEl.addEventListener('click', open);
     cardEl.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
@@ -367,9 +378,48 @@ function setupMemberModal() {
 function closeMemberModal() {
   const modal = document.getElementById('member-modal');
   if (!modal) return;
+  /* 重要：aria-hidden を付ける「前に」フォーカスをモーダルの外へ出す。
+     （中にフォーカスが残ったまま隠すとブラウザが警告を出す） */
+  if (modal.contains(document.activeElement)) {
+    if (MEMBER_MODAL_OPENER && document.contains(MEMBER_MODAL_OPENER)) {
+      MEMBER_MODAL_OPENER.focus();
+    } else if (document.activeElement && document.activeElement.blur) {
+      document.activeElement.blur();
+    }
+  }
   modal.classList.remove('is-open');
   modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
+}
+
+/* ============================================================
+   3b. schedule.txt … 練習曜日（練習スケジュールページのみ）
+   ------------------------------------------------------------
+   「タイトル」「補足」以外のすべての行を「区分：曜日」として表示する。
+   （長距離・短距離のほか、行を足せば項目を増やせる）
+   ============================================================ */
+async function applyPracticeDays() {
+  const box = document.getElementById('practice-days-box');
+  if (!box) return;
+  const text = await fetchText('/content/schedule.txt');
+  if (!text) { showLoadNotice(box, 'schedule.txt'); return; }
+
+  const c = parseKV(text);
+  const title = c['タイトル'] || '練習曜日';
+  const note  = (c['補足'] || '').trim();
+
+  const rows = Object.entries(c)
+    .filter(([k, v]) => k !== 'タイトル' && k !== '補足' && String(v).trim() !== '')
+    .map(([k, v]) => `
+      <li class="practice-day-row">
+        <span class="practice-day-label">${escapeHtml(k)}</span>
+        <span class="practice-day-value">${escapeHtml(v)}</span>
+      </li>`).join('');
+
+  box.innerHTML = `
+    <h3>${escapeHtml(title)}</h3>
+    <ul class="practice-days">${rows || '<li class="practice-day-row">（未設定）</li>'}</ul>
+    ${note ? `<p class="practice-days-note">${escapeHtml(note)}</p>` : ''}`;
 }
 
 /* ============================================================
@@ -673,6 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
   runSafely('site.txt',    applySite);
   runSafely('coach.txt',   applyCoach);
   runSafely('members.txt', applyMembers);
+  runSafely('schedule.txt', applyPracticeDays);
   runSafely('ekiden.txt',  applyEkiden);
   runSafely('news.txt',    applyNews);
 });

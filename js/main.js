@@ -873,3 +873,21 @@ document.addEventListener(
     setTimeout(done, 10000);
   });
 })();
+
+/* ============================================================
+   12. コンテンツ保護（抑止）
+   ------------------------------------------------------------
+   画像の右クリック保存・ドラッグ保存を防ぐ。
+   文字の選択禁止・iPhone長押し禁止は css/style.css 側で設定。
+   ※スクリーンショット等までは防げません（静的サイトの技術的限界）。
+   ============================================================ */
+(function () {
+  /* 画像上の右クリックメニューを出さない */
+  document.addEventListener('contextmenu', e => {
+    if (e.target.closest('img, .hero-bg, .member-avatar')) e.preventDefault();
+  });
+  /* 画像のドラッグ開始を止める（デスクトップでのドラッグ保存対策） */
+  document.addEventListener('dragstart', e => {
+    if (e.target.closest('img')) e.preventDefault();
+  });
+})();

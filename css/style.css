@@ -31,6 +31,29 @@ html { scroll-behavior: smooth; }
 body { font-family: var(--font); font-size: 16px; line-height: 1.7; color: var(--text); background: var(--primary); -webkit-font-smoothing: antialiased; overflow-x: clip; }
 img { max-width: 100%; height: auto; display: block; }
 a { color: inherit; text-decoration: none; }
+
+/* ============================================================
+   コンテンツ保護（抑止）
+   ------------------------------------------------------------
+   ・文字の選択コピーと、画像の右クリック/長押し/ドラッグ保存を防ぐ。
+   ・※スクリーンショットやページのソース表示までは防げません（技術的に不可能）。
+   ・お問い合わせフォームの入力欄と、ニュース整理ページのコピー用ブロックは
+     選択できるまま残しています。
+   ============================================================ */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+input, textarea, select, [contenteditable="true"],
+.maint-block {                       /* 整理ページの「削除用ブロック」は担当者がコピーする */
+  -webkit-user-select: text;
+  user-select: text;
+}
+img {
+  -webkit-touch-callout: none;       /* iPhoneの長押し保存メニューを出さない */
+  -webkit-user-drag: none;           /* ドラッグで画像を持ち出せないように */
+  user-select: none;
+}
 /* 【スマホの反応改善】タップ時の「ダブルタップ判定待ち」を無くし、
    リンク・ボタンが1回のタップですぐ反応するようにする */
 a, button, [role="button"] { touch-action: manipulation; }
@@ -203,7 +226,7 @@ button { font-family: var(--font); cursor: pointer; }
 }
 .hamburger span { display: block; width: 24px; height: 2px; background: #ffffff; border-radius: 2px; transition: var(--t); }
 .hamburger.is-active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger.is-active span:nth-child(2) { opacity: 0; }
+.hamburger.is-active span:nth-child(2) { opacity: 0; visibility: hidden; transform: scaleX(0); }
 .hamburger.is-active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 /* --- スマホ用メニュー（全画面）(#4) ---
@@ -220,11 +243,14 @@ button { font-family: var(--font); cursor: pointer; }
      出ることがある。動的ビューポート単位 dvh で常に画面全体を埋める。
      （dvh 非対応の古い端末向けに 100vh も残してある） */
   height: 100vh;
-  height: 100dvh;
+  /* 100lvh＝ツールバーが隠れた「最大の画面」基準。常に画面全体以上を覆うので
+     下端の塗り残しが起きない（dvh では iOS のツールバー格納時に隙間が出ることがあった） */
+  height: 100lvh;
   min-height: 100%;
   background: rgba(69, 20, 160, 0.97); z-index: 999;
   /* 上の padding はヘッダー高さ + 12px。×ボタンとメニュー項目が重ならないための余白 */
-  padding: calc(var(--header-h) + 12px) 24px 40px;
+  padding: calc(var(--header-h) + 12px) 24px
+           calc(40px + env(safe-area-inset-bottom, 0px));   /* ホームバー分の余白 */
   overflow-y: auto;
 }
 .mobile-nav.is-open { display: block; }
@@ -518,11 +544,16 @@ body.nav-open .to-top { opacity: 0; visibility: hidden; pointer-events: none; }
   font-family: var(--font); cursor: pointer; transition: all var(--t); display: inline-block;
 }
 @media (hover: hover) and (pointer: fine) {
-  .block-nav-btn:hover, .block-nav-btn.active {
+  .block-nav-btn:hover {
     background: var(--primary); color: #fff;
     transform: translateY(-2px); box-shadow: 0 4px 12px rgba(109,40,217,0.3);
   }
 }
+/* 選択中のブロックは端末を問わず常に強調表示 */
+.block-nav-btn.active {
+    background: var(--primary); color: #fff;
+    transform: translateY(-2px); box-shadow: 0 4px 12px rgba(109,40,217,0.3);
+  }
 
 /* === Member Cards === */
 .members-block-head {
@@ -542,20 +573,25 @@ body.nav-open .to-top { opacity: 0; visibility: hidden; pointer-events: none; }
 }
 
 /* ---- 役職バッジ（members.txt の「役職：」に記入がある人だけ表示）----
-   【調整】色を変えたいとき：background（金）と color（文字色）を変更 */
+   すりガラス風の金：半透明の金グラデーション＋細い金縁＋背景ぼかし。
+   【調整】色味は background / border / color、大きさは font-size / padding */
 .member-role-badge {
   position: absolute; top: 10px; right: 10px;
-  background: var(--accent); color: #1F2937;
-  font-size: 12px; font-weight: 700; line-height: 1;
-  padding: 6px 10px; border-radius: 999px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, rgba(245,158,11,0.30), rgba(251,191,36,0.16));
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(245,158,11,0.55);
+  color: #92400E;                       /* 濃い琥珀色：白背景でも読みやすい */
+  font-size: 14px; font-weight: 700; line-height: 1;
+  padding: 8px 14px; border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(245,158,11,0.22);
+  letter-spacing: 0.05em;
   pointer-events: none;   /* バッジの上でもカードのクリックが効くように */
 }
 /* 拡大表示（モーダル）では左上に表示する */
 .member-role-badge--modal {
   right: auto; left: 14px; top: 14px;
-  font-size: 13px; padding: 7px 12px;
+  font-size: 15px; padding: 9px 16px;
 }
 @media (hover: hover) and (pointer: fine) {
   .member-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
@@ -611,8 +647,10 @@ body.nav-open .to-top { opacity: 0; visibility: hidden; pointer-events: none; }
 .year-nav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
 .year-btn { padding: 8px 18px; border: 2px solid var(--primary); background: #fff; color: var(--primary); border-radius: 22px; font-size: 13px; font-weight: 700; font-family: var(--font); cursor: pointer; transition: all var(--t); }
 @media (hover: hover) and (pointer: fine) {
-  .year-btn:hover, .year-btn.active { background: var(--primary); color: #fff; }
+  .year-btn:hover { background: var(--primary); color: #fff; }
 }
+/* 選択中の年度は端末を問わず常に紫背景（スマホでも「今どの年度か」が分かる） */
+.year-btn.active { background: var(--primary); color: #fff; }
 .year-section { display: none; }
 .year-section.active { display: block; }
 
@@ -1359,4 +1397,76 @@ body.nav-open .to-top { opacity: 0; visibility: hidden; pointer-events: none; }
   .history-hero-title, .history-hero-sub {
     animation: none;
   }
+}
+
+/* ============================================================
+   起動スプラッシュ（js/layout.js の ④ が生成・再生）
+   ------------------------------------------------------------
+   紫（--primary-dark）の全画面の中央に、白い角丸タイルに載せたロゴ。
+   タイルがふわっと現れ、光の輪が一度広がり、全体がフェードアウトする。
+   【調整】背景色を --primary にしたいとき：background を var(--primary) に。
+   ============================================================ */
+#app-splash {
+  position: fixed; inset: 0;
+  height: 100vh; height: 100lvh;          /* メニューと同じく最大画面基準 */
+  background: var(--primary-dark);
+  z-index: 10000;
+  display: none;
+  align-items: center; justify-content: center;
+  pointer-events: none;                    /* 表示中も下の操作を妨げない */
+}
+#app-splash.is-playing {
+  display: flex;
+  animation: splashFadeOut 0.4s ease 1.0s forwards;   /* 1.0s待って0.4sで消える */
+}
+.app-splash-center { position: relative; display: grid; place-items: center; }
+.app-splash-tile {
+  display: grid; place-items: center;
+  width: 108px; height: 108px;
+  background: #fff; border-radius: 24px;   /* ヘッダーのロゴ枠と同じデザイン言語 */
+  box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+  animation: splashTileIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.app-splash-tile img { width: 84px; height: 84px; object-fit: contain; border-radius: 16px; }
+.app-splash-ring {
+  position: absolute; width: 108px; height: 108px;
+  border: 2px solid rgba(255,255,255,0.7); border-radius: 32px;
+  animation: splashRing 0.8s ease-out 0.35s both;
+}
+@keyframes splashTileIn {
+  from { transform: scale(0.78); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+@keyframes splashRing {
+  from { transform: scale(1);   opacity: 0.8; }
+  to   { transform: scale(2.1); opacity: 0; }
+}
+@keyframes splashFadeOut {
+  to { opacity: 0; visibility: hidden; }
+}
+/* 動きを減らす設定の人には JS 側で表示自体を行わない（保険で非表示指定） */
+@media (prefers-reduced-motion: reduce) {
+  #app-splash { display: none !important; }
+}
+
+/* ============================================================
+   練習曜日ボックス（練習スケジュールページ・カレンダー下）
+   内容の編集は content/schedule.txt（HTML・CSSは触らなくてOK）
+   ============================================================ */
+.practice-days-box { margin-top: 24px; }
+.practice-days { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.practice-day-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 4px 0;
+}
+.practice-day-label {
+  flex: 0 0 auto; min-width: 84px; text-align: center;
+  background: var(--primary); color: #fff;
+  font-size: 13px; font-weight: 700;
+  padding: 6px 14px; border-radius: 999px;
+}
+.practice-day-value { font-size: 15px; font-weight: 700; letter-spacing: 0.04em; }
+.practice-days-note { margin-top: 14px; font-size: 13px; color: var(--sub); line-height: 1.8; }
+@media (max-width: 480px) {
+  .practice-day-row { flex-direction: column; align-items: flex-start; gap: 6px; }
 }
