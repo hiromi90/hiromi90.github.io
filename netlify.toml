@@ -4,32 +4,62 @@
 # ============================================================
 # ★安全対策：万一 .git フォルダ等を含めてアップロードしてしまっても、
 #   外部からは見えないようにブロックする「保険」のルール。
-#   （基本は「.git を含めずにアップロードする」運用が第一。README参照）
+#   （基本は「.git・.gitignore・.DS_Store を含めずにアップロードする」
+#     運用が第一。README「公開用コピーの作り方」参照）
+#
+#   【Netlify のルール仕様・重要】
+#   ・アスタリスク（*）は「末尾」でしか使えない。
+#     パスの途中に書いたもの（例 /*/.DS_Store）は何にもマッチしない。
+#     階層下を指定したいときは :名前 のプレースホルダ（1階層分）を使う。
+#   ・force = true が無いルールは「実ファイルが存在しない場合のみ」効く。
+#     実在するファイルを隠すには force = true が必須。
+#   ・ルールは上から順に評価され、最初に一致したものが使われる。
+#     そのため一番下の「/*」より上に個別ルールを置くこと。
 # ============================================================
+
+# ----- .git（最重要。全編集履歴が復元されうる） -----
 [[redirects]]
   from = "/.git/*"
   to   = "/404.html"
   status = 404
   force  = true
 
+# ----- .gitignore（内部のファイル名を開示しないため） -----
 [[redirects]]
   from = "/.gitignore"
   to   = "/404.html"
   status = 404
   force  = true
 
-[[redirects]]
-  from = "/*/.DS_Store"
-  to   = "/404.html"
-  status = 404
-  force  = true
-
+# ----- .DS_Store（フォルダ内のファイル名一覧が漏れる） -----
+# ルート直下（例：/.DS_Store）
 [[redirects]]
   from = "/.DS_Store"
   to   = "/404.html"
   status = 404
   force  = true
 
+# 【調整】1階層下（例：/images/.DS_Store・/content/.DS_Store）
+# 旧 "/*/.DS_Store" は * が途中にあり機能しなかったため
+# プレースホルダ方式へ変更（2026-07-15 修正）
+[[redirects]]
+  from = "/:folder/.DS_Store"
+  to   = "/404.html"
+  status = 404
+  force  = true
+
+# 【調整】2階層下（例：/images/members/.DS_Store・/news/フォルダ名/.DS_Store）
+# 本サイトの最大の深さは2階層。階層が増えたらルールを1本足すこと
+[[redirects]]
+  from = "/:folder/:sub/.DS_Store"
+  to   = "/404.html"
+  status = 404
+  force  = true
+
+# ----- 存在しないURL → 404ページ -----
+# （Netlify は 404.html を自動で返すため実質は冗長だが、
+#   意図を明示するため残している。force を付けないこと。
+#   付けると全ページが404になる）
 [[redirects]]
   from = "/*"
   to   = "/404.html"
