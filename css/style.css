@@ -695,9 +695,13 @@ body.nav-open .to-top { opacity: 0; visibility: hidden; pointer-events: none; }
   transform: translateY(2px) rotate(-135deg);
 }
 
-/* マウスを乗せたときだけ薄くする（スマホの誤作動を防ぐため hover 対応機器に限定） */
+/* マウスを乗せたときだけ薄くする（スマホの誤作動を防ぐため hover 対応機器に限定）
+   ※ .comp-head には fade-up を付けないこと。付けると .fade-up.visible の
+     opacity:1 と詳細度が同点になり、後に書かれている側が勝って
+     ホバーが効かなくなる（スクロール連動フェードは .comp-item 側に付ける）。
+     ここでは念のため .comp-item を挟んで詳細度を1段上げている。 */
 @media (hover: hover) and (pointer: fine) {
-  .comp-head:hover { opacity: 0.6; }
+  .comp-item .comp-head:hover { opacity: 0.6; }
 }
 .comp-head:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 

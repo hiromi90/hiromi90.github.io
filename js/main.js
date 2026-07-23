@@ -844,8 +844,11 @@ document.addEventListener(
 
       /* 見出しボックス。ボックス内のどこを押しても開閉できるよう
          ボタンとして扱い、下中央に印（.comp-toggle）を置きます。
-         初期状態は「すべて閉じた状態」です。 */
-      const head = `<div class="comp-head fade-up" role="button" tabindex="0"
+         初期状態は「すべて閉じた状態」です。
+         ※ fade-up（スクロール連動フェード）は外側の .comp-item に付けます。
+           ここに付けると .fade-up.visible の opacity:1 が
+           ホバー時の opacity:0.6 を打ち消してしまうためです。 */
+      const head = `<div class="comp-head" role="button" tabindex="0"
         aria-expanded="false" aria-controls="${bodyId}">
         <p class="comp-name">${escapeResultHtml(title.name)}</p>
         ${title.meta ? `<p class="comp-meta">${escapeResultHtml(title.meta)}</p>` : ""}
@@ -853,7 +856,7 @@ document.addEventListener(
       </div>`;
 
       if (!rows.length) {
-        return `<div class="comp-item">${head}
+        return `<div class="comp-item fade-up">${head}
           <div class="comp-body" id="${bodyId}" hidden>
             <p class="records-empty">この大会のデータはまだ入力されていません。</p>
           </div>
@@ -884,10 +887,10 @@ document.addEventListener(
         return `<tr${isFirst ? ' class="badge-rank1-row"' : ""}>${cells}</tr>`;
       }).join("");
 
-      /* テーブル側は閉じているあいだ画面に出ないため、
-         fade-up（スクロール連動フェード）は付けません。
-         代わりに開いたときに .comp-body 側でふわっと表示します。 */
-      return `<div class="comp-item">${head}
+      /* フェードは大会1件のまとまり（.comp-item）ごとに掛けます。
+         テーブル側は閉じているあいだ画面に出ないため個別の
+         fade-up は付けず、開いたときに .comp-body 側で表示します。 */
+      return `<div class="comp-item fade-up">${head}
         <div class="comp-body" id="${bodyId}" hidden>
           <p class="scroll-hint">← 横にスクロールできます →</p>
           <div class="table-wrap">
